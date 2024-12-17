@@ -18,18 +18,43 @@ app.use(express.static(path.join(__dirname, 'public')));
 /////////////////////// IMPLEMENT BELOW STEPS //////////////////////
 
 // Setup io to listen to new connection and then inside its callback implement
+io.on("connection", (socket) => {
+  console.log("A User Connected")
+
 
   // Send {username:"Bot", message:"Welcome to chatbox"} about "message" to current socket only
+  socket.emit("message", { username: "Bot", message: "Welcome to chatbox" })
 
   // Listen for "userJoin" from client to get new username, add him to users array as {id: socket.id, username: username},
   // send {username:"Bot",message:`${username} has joined the chat`} about "message" to everyone except current socket and
   // send updated users array about "updateUsers" to every socket
+  socket.on("userJoin", (username) => {
+    users.push({ id: socket.id, username: username })
+    socket.broadcast.emit("message", { username: "Bot", message: `${username} has joined the chat` })
+    io.emit("updateUsers", users)
+  })
+
 
   // Listen for "disconnect", find the username from users array matching socket.id and 
   // send {username:"Bot",message:`${username} has left the chat`} about "message" to everyone except current socket
   // also remove the user from users array send updated users array about "updateUsers" to every socket
+  socket.on("disconnect", () => {
+    const user = users.find(u => u.id === socket.id)
+    if (user) {
+      socket.broadcast.emit({ username: "Bot", message: `${username} has left the chat` })
+    }
+    const index = users.indexOf(user)
+    if (index != -1) {
+      users.splice(index, 1)
+    }
+    io.emit("updateUsers", users)
+  })
 
   // Listen for "chatMessage" for any message and send {username:msg.username,message:msg.message} about "message" to every socket
+  socket.on("chatMessage", (msg) => {
+    io.emit("message", { username: msg.username, message: msg.message })
+  })
+})
 
 
 let server = http.listen(port, () => console.log(`Server Running at port ${port}`));
