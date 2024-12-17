@@ -21,56 +21,58 @@ const { username } = Qs.parse(location.search, { ignoreQueryPrefix: true });
 
 // When a user submit a message in chatForm send {username: username, message: messageInput.value } about chatMessage to server 
 
-//answer
-//send username to server
-socket.emit("UserJoin", username);
+// Send username to server for "userJoin" event
+socket.emit("userJoin", username);
 
-//Listen to the userUsers from server and update the list
-socket.on("updateUser", (users) => {
-    //clear the current list
-    usersList.innerHTML = ""
+// Listen for "updateUsers" from the server
+socket.on("updateUsers", (users) => {
+    // Clear the current list
+    usersList.innerHTML = "";
 
-    // update the userlist for each user
-    users.forEach(user => {
+    // Update the user list with new users
+    users.forEach((user) => {
         const li = document.createElement("li");
         li.textContent = user.username;
-        usersList.appendChild(li)
+        usersList.appendChild(li);
     });
-})
+});
 
-//Listen for the message from the server
+// Listen for "message" from the server
 socket.on("message", (data) => {
-    ///create a new message element
+    // Create a new message element
     const messageDiv = document.createElement("div");
     messageDiv.classList.add("message");
-    //username
-    const meta = document.createElement('p');
+
+    const meta = document.createElement("p");
     meta.classList.add("meta");
     meta.textContent = data.username;
-    //message
-    const text = document.createElement('p');
+
+    const text = document.createElement("p");
     text.classList.add("text");
     text.textContent = data.message;
-    //append the username and message in the div element
+
     messageDiv.appendChild(meta);
-    messageDiv.appendChild(text)
+    messageDiv.appendChild(text);
 
-
-    //Add messages to the messages container
+    // Add the message to the messages container
     messages.appendChild(messageDiv);
 
-    //scroll to the latest message
+    // Scroll to the latest message
     messages.scrollTop = messages.scrollHeight;
 });
 
-//Handle Submissions;
+// Handle form submission
 chatForm.addEventListener("submit", (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    const message = messageInput.ariaValueMax.trim()
+    const message = messageInput.value.trim();
+
     if (message) {
-        socket.emit("Chatmessage", { username, message })
-        messageInput.value = ""
-        messageInput.focus()
+        // Send the message to the server
+        socket.emit("chatMessage", { username, message });
+
+        // Clear the input field
+        messageInput.value = "";
+        messageInput.focus();
     }
-})
+});
